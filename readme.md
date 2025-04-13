@@ -31,7 +31,7 @@ nelux_injector/
 ## Installation
 
 ```bash
-git clone https://github.com/yourusername/nelux_injector.git
+git clone https://github.com/Nelux1/Nelux_1nject0r.git
 cd nelux_injector
 pip install -r requirements.txt
 ```
