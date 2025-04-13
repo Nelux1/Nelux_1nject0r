@@ -66,7 +66,6 @@ python3 main.py -l urls.txt -t 10
 
 - `parameters.txt`: URLs whose parameters allowed at least one special character (potentially vulnerable).
 - `vulnerables.txt`: URLs clearly vulnerable to XSS or SQLi.
-- `not_vuln.txt`: URLs that filtered all special characters (probably safe).
 
 ---
 
