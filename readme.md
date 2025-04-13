@@ -20,7 +20,7 @@ Nelux 1nject0r is an offensive Python tool designed to detect potential **XSS** 
 nelux_injector/
 ├── main.py              # Main execution script
 ├── injector.py          # Manages the injection logic
-│   └── fuzzer.py        # Fuzzer for special character testing
+│── fuzzer.py        # Fuzzer for special character testing
 ├── utils/
 │   └── param.py         # Crawling and parameter extraction
 ├── requirements.txt     # Python dependencies
@@ -109,5 +109,5 @@ MIT License
 ## Author
 
 **Nelux**  
-GitHub: [@yourusername](https://github.com/yourusername)
+GitHub: https://github.com/Nelux1/Nelux_1nject0r/
 
