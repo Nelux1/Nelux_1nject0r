@@ -10,7 +10,7 @@ WAYBACK_API = "http://web.archive.org/cdx/search/cdx"
 URL_PARAM_REGEX = r"[\"']((?:https?:)?\/\/[^\"']+\?[^\s\"'>]+)[\"']"
 
 def get_wayback_urls(domain):
-    print(f"[*] Buscando en Wayback Machine: {domain}")
+    print(f"[*] Searching for parameters: {domain}")
     try:
         response = requests.get(WAYBACK_API, params={
             "url": domain + "/*",
@@ -24,14 +24,14 @@ def get_wayback_urls(domain):
             return urls
     except requests.exceptions.RequestException as e:
         # Capturamos todos los errores relacionados con solicitudes HTTP
-        print(f"[!] Error en Wayback Machine para la URL {domain}: {e}")
+        print(f"[!] Error in Wayback Machine for the URL {domain}: {e}")
     except Exception as e:
         # Capturamos cualquier otro error inesperado
-        print(f"[!] Error desconocido en Wayback Machine para la URL {domain}: {e}")
+        print(f"[!] Unknown error in Wayback Machine for the URL  {domain}: {e}")
     return []  # Retorna una lista vacía si hubo un error
 
 def crawl_site(url):
-    print(f"[*] Crawling en sitio: {url}")
+    print(f"[*] Crawling site: {url}")
     visited = set()
     urls = set()
     queue = [url]
@@ -67,9 +67,9 @@ def crawl_site(url):
                     full = f if f.startswith("http") else urljoin(base, f)
                     urls.add(full)
         except requests.exceptions.RequestException as e:
-            print(f"[!] Error de red al acceder a {current}: {e}")
+            print(f"[!] Network error while accessing {current}: {e}")
         except Exception as e:
-            print(f"[!] Error al procesar {current}: {e}")
+            print(f"[!] Error processing {current}: {e}")
             continue  # Continua con la siguiente URL si ocurre cualquier otro error
 
     return list(urls)
@@ -87,16 +87,16 @@ def extract_params(target_url):
     if wayback_urls:
         all_urls.update(wayback_urls)
     else:
-        print(f"[!] No se pudieron obtener URLs de Wayback para {target_url}")
+        print(f"[!] Could not retrieve URLs from Wayback for {target_url}")
 
     # Agregar desde crawling
     crawled_urls = crawl_site(target_url)
     if crawled_urls:
         all_urls.update(crawled_urls)
     else:
-        print(f"[!] No se pudieron obtener URLs al hacer crawling en {target_url}")
+        print(f"[!] Could not retrieve URLs during crawling for {target_url}")
 
-    print(f"\n[+] URLs totales encontradas: {len(all_urls)}")
+    print(f"\n[+] Total URLs found: {len(all_urls)}")
 
     # Filtrar URLs con parámetros válidas dentro del mismo dominio/subdominio
     urls_with_params = [
@@ -120,12 +120,12 @@ def extract_params(target_url):
                 clean_url = f"{base}?{param}"
                 unique_param_urls.append(clean_url)
 
-    print(f"[+] URLs con parámetros únicos: {len(unique_param_urls)}")
+    print(f"[+] Unique URLs with parameters: {len(unique_param_urls)}")
 
     for u in unique_param_urls:
         print(f"[{CYAN}+{RESET}] Param URL found: {u}")
-
-    print(f"[+] Se encontraron {len(unique_param_urls)} URLs con parámetros únicas.\n")
+    
+    print(f"[+] Found {len(unique_param_urls)} unique URLs with parameters.\n")
     return unique_param_urls
 
 
