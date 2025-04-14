@@ -1,4 +1,4 @@
-mport requests
+import requests
 from requests.exceptions import RequestException
 from concurrent.futures import ThreadPoolExecutor
 import threading
