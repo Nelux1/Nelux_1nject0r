@@ -35,7 +35,7 @@ def test_parameter_sanitization(url, param):
             if response.status_code == 200 and char in response.text:
                 vulnerable_chars.append(char)
         except RequestException as e:
-            print(f"{RED}[!] Error al hacer request a {test_url}: {e}{RESET}")
+            print(f"{RED}[!] Error in request {test_url}: {e}{RESET}")
             continue
 
     return vulnerable_chars
@@ -53,7 +53,7 @@ def detect_injection_type(chars):
     elif any(c in sqli_set for c in chars):
         return 'SQLi'
     else:
-        return 'Unknown'
+        return 'SQLi or XSS'
 
 
 def analyze_url(url):
@@ -64,15 +64,15 @@ def analyze_url(url):
     query_params = parse_qs(parsed.query)
 
     for param in query_params:
-        print(f"{YELLOW}[*] Testeando parámetro: {param} en {url}{RESET}")
+        print(f"{YELLOW}[*] Testing parameter: {param} en {url}{RESET}")
         vulnerable_chars = test_parameter_sanitization(url, param)
 
         if vulnerable_chars:
             vuln_type = detect_injection_type(vulnerable_chars)
-            print(f"{RED}[⚠] Posible vulnerabilidad detectada: {vuln_type}{RESET}")
+            print(f"{RED}[⚠] Possible vulnerability detected: {vuln_type}{RESET}")
             print(f"{CYAN}URL     : {url}{RESET}")
-            print(f"{CYAN}Parámetro: {param}{RESET}")
-            print(f"{GREEN}No filtra: {', '.join(vulnerable_chars)}{RESET}\n")
+            print(f"{CYAN}Parameter: {param}{RESET}")
+            print(f"{GREEN}No filter: {', '.join(vulnerable_chars)}{RESET}\n")
 
             # Guardar la URL con el valor FUZZ sin comentarios ni números
             query = parse_qs(parsed.query)
@@ -91,6 +91,6 @@ def test_parameters(urls_with_params, threads=20):
     """
     Toma una lista de URLs con parámetros y las analiza en paralelo.
     """
-    print(f"{CYAN}[*] Iniciando análisis con {threads} threads...{RESET}\n")
+    print(f"{CYAN}[*] Starting analysis with {threads} threads...{RESET}\n")
     with ThreadPoolExecutor(max_workers=threads) as executor:
         executor.map(analyze_url, urls_with_params)
