@@ -29,7 +29,7 @@ def banner():
 ██║╚██╗██║██╔══╝  ██║     ██║   ██║ ██╔██╗   1NJECT0R
 ██║ ╚████║███████╗███████╗╚██████╔╝██╔╝ ██╗
 ╚═╝  ╚═══╝╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝
-Nelux 1nject0r - Param Filter Checker By Marcos Suarez V1.0
+Nelux 1nject0r - Param Filter Checker By Marcos Suarez V1.1
 {RESET}
     """)
 
@@ -46,11 +46,11 @@ def process_url(url, threads):
     try:
         urls_con_param = extract_params(url)
         if not urls_con_param:
-            print(f"{RED}[!] No se encontraron parámetros inyectables en: {url}{RESET}")
+            print(f"{RED}[!] No injectable parameters found in: {url}{RESET}")
             return
         test_parameters(urls_con_param, threads)
     except Exception as e:
-        print(f"{RED}[!] Error procesando la URL {url}: {e}{RESET}")
+        print(f"{RED}[!] Error processing the URL {url}: {e}{RESET}")
 
 def main():
     parser = argparse.ArgumentParser(description="Nelux 1nject0r - Param Filter Checker")
@@ -63,7 +63,7 @@ def main():
     banner()
 
     if args.url:
-        print(f"{CYAN}[*] Escaneando URL individual: {args.url}{RESET}")
+        print(f"{CYAN}[*] Scanning URL: {args.url}{RESET}")
         process_url(args.url, args.threads)
         if args.word:
          fuzz_from_file(args.word, args.threads)
@@ -72,7 +72,7 @@ def main():
         try:
             with open(args.list, 'r') as file:
                 urls = file.readlines()
-                print(f"{CYAN}[*] Escaneando URLs desde archivo: {args.list}{RESET}")
+                print(f"{CYAN}[*] Scanning URLs from file: {args.list}{RESET}")
                 for url in urls:
                     url = url.strip()
                     if url:
@@ -80,14 +80,14 @@ def main():
             if args.word:
                  fuzz_from_file(args.word, args.threads)                                   
         except FileNotFoundError:
-            print(f"{RED}[!] Archivo no encontrado: {args.list}{RESET}")
+            print(f"{RED}[!] File not found: {args.list}{RESET}")
             sys.exit(1)
         except Exception as e:
-            print(f"{RED}[!] Error leyendo el archivo: {e}{RESET}")
+            print(f"{RED}[!] Error reading the file: {e}{RESET}")
             sys.exit(1)
     
     else:
-        print(f"{RED}[!] Por favor especificá una URL con -u o un archivo con -l.{RESET}")
+        print(f"{RED}[!] Please specify a URL with -u or a file with -l.{RESET}")
 
          
 if __name__ == "__main__":
