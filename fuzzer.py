@@ -1,4 +1,4 @@
-import requests
+mport requests
 from requests.exceptions import RequestException
 from concurrent.futures import ThreadPoolExecutor
 import threading
@@ -17,7 +17,7 @@ def load_payloads(wordlist_path):
         with open(wordlist_path, 'r') as f:
             return [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
-        print(f"{RED}[!] No se pudo abrir la wordlist: {wordlist_path}{RESET}")
+        print(f"{RED}[!] Failed to open the wordlist: {wordlist_path}{RESET}")
         return []
 
 def load_fuzz_targets():
@@ -25,7 +25,7 @@ def load_fuzz_targets():
         with open("parameters.txt", "r") as f:
             return [line.strip() for line in f if "FUZZ" in line]
     except FileNotFoundError:
-        print(f"{RED}[!] No se encontró el archivo parametros.txt{RESET}")
+        print(f"{RED}[!] parameters.txt file not found{RESET}")
         return []
 
 def is_vulnerable(response, payload):
@@ -53,7 +53,7 @@ def test_payload(target_url, payload):
                 print(f"{GREEN}[✓]{RESET} {test_url}")
     except RequestException as e:
         with lock:
-            print(f"{RED}[!] Error con {test_url}: {e}{RESET}")
+            print(f"{RED}[!] Error with {test_url}: {e}{RESET}")
 
 def fuzz_from_file(wordlist_path, threads):
     global vulnerable_count
@@ -64,11 +64,12 @@ def fuzz_from_file(wordlist_path, threads):
     if not fuzz_targets or not payloads:
         return
 
-    print(f"{CYAN}[*] Iniciando fuzzing con {len(payloads)} payloads usando {threads} hilos...{RESET}\n")
+    print(f"{CYAN}[*] Starting fuzzing with {len(payloads)} payloads using {threads} threads...{RESET}\n")
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
         for target_url in fuzz_targets:
             for payload in payloads:
                 executor.submit(test_payload, target_url, payload)
 
-    print(f"\n{CYAN}[*] Fuzzing finalizado. URLs vulnerables encontradas: {RED}{vulnerable_count}{RESET}")
+    print(f"\n{CYAN}[*] Fuzzing completed. Vulnerable URLs found: {RED}{vulnerable_count}{RESET}")
+
