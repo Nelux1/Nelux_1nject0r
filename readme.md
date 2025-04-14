@@ -6,11 +6,21 @@ Nelux 1nject0r is an offensive Python tool designed to detect potential **XSS** 
 
 ## Features
 
-- 🔍 Extracts parameterized URLs using **Wayback Machine** and **site crawling**.
-- ⚔️ Tests for injections using special characters (`<`, `>`, `"`, `'`, `;`, `--`, etc.).
-- 🧠 Removes duplicate parameters (same domain + same parameter name).
-- 🚫 Skips URLs that auto-redirect, as they can't be reliably tested.
-- 📂 Outputs organized results for further analysis.
+🔍 Extracts parameterized URLs from a target domain using the Wayback Machine and site crawling.
+
+🎯 Filters and keeps only URLs that contain parameters.
+
+⚔️ Injects special characters (<, >, ", ', ;, --, etc.) into parameters to test if the site properly sanitizes input.
+
+🧠 Stores URLs that do not sanitize inputs in a file called parameters.txt for manual testing or further fuzzing.
+
+🔁 Allows the user to either stop after gathering unsanitized parameters, or continue with a second phase of fuzzing using a custom payload list.
+
+💥 If any injection payload triggers a vulnerability, the affected URL is saved in vulnerables.txt.
+
+🚫 Automatically skips URLs that perform redirects, as they can't be reliably tested.
+
+📂 Organizes and outputs results for streamlined vulnerability analysis.
 
 ---
 
