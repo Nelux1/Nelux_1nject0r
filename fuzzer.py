@@ -37,11 +37,11 @@ def is_vulnerable(response, payload):
         return True
     return False
 
-def test_payload(target_url, payload):
+def test_payload(target_url, payload, headers):
     global vulnerable_count
     test_url = target_url.replace("FUZZ", payload)
     try:
-        response = requests.get(test_url, timeout=5)
+        response = requests.get(test_url,headers=headers, timeout=5)
         if is_vulnerable(response, payload):
             with lock:
                 print(f"{RED}[VULNERABLE]{RESET} {test_url}")
@@ -55,7 +55,7 @@ def test_payload(target_url, payload):
         with lock:
             print(f"{RED}[!] Error with {test_url}: {e}{RESET}")
 
-def fuzz_from_file(wordlist_path, threads):
+def fuzz_from_file(wordlist_path, threads,  headers=None):
     global vulnerable_count
     vulnerable_count = 0  # Reiniciar al comenzar
     fuzz_targets = load_fuzz_targets()
@@ -69,7 +69,7 @@ def fuzz_from_file(wordlist_path, threads):
     with ThreadPoolExecutor(max_workers=threads) as executor:
         for target_url in fuzz_targets:
             for payload in payloads:
-                executor.submit(test_payload, target_url, payload)
+                executor.submit(test_payload, target_url, payload, headers)
 
     print(f"\n{CYAN}[*] Fuzzing completed. Vulnerable URLs found: {RED}{vulnerable_count}{RESET}")
 
