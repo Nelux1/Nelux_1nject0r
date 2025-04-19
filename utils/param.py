@@ -9,6 +9,17 @@ WAYBACK_API = "http://web.archive.org/cdx/search/cdx"
 # Regex de LinkFinder para encontrar URLs con parámetros
 URL_PARAM_REGEX = r"[\"']((?:https?:)?\/\/[^\"']+\?[^\s\"'>]+)[\"']"
 
+# Colores para salida en consola
+CYAN = "\033[96m"
+YELLOW = "\033[93m"
+RESET = "\033[0m"
+
+# Parámetros comúnmente irrelevantes para pruebas (resolución, formato, etc.)
+BORING_PARAMS = {
+    "impolicy", "imformat", "fp_height", "height", "width", "resize",
+    "format", "quality", "crop", "bgcolor", "fillcolor", "canvas", "cache"
+}
+
 def get_wayback_urls(domain):
     print(f"[*] Searching for parameters: {domain}")
     try:
@@ -18,19 +29,17 @@ def get_wayback_urls(domain):
             "fl": "original",
             "collapse": "urlkey"
         }, timeout=10)
-        response.raise_for_status()  # Lanza una excepción para códigos de estado no 2xx
+        response.raise_for_status()
         if response.status_code == 200:
             urls = list(set([entry[0] for entry in response.json()[1:]]))
             return urls
     except requests.exceptions.RequestException as e:
-        # Capturamos todos los errores relacionados con solicitudes HTTP
         print(f"[!] Error in Wayback Machine for the URL {domain}: {e}")
     except Exception as e:
-        # Capturamos cualquier otro error inesperado
         print(f"[!] Unknown error in Wayback Machine for the URL  {domain}: {e}")
-    return []  # Retorna una lista vacía si hubo un error
+    return []
 
-def crawl_site(url):
+def crawl_site(url,headers):
     print(f"[*] Crawling site: {url}")
     visited = set()
     urls = set()
@@ -49,7 +58,7 @@ def crawl_site(url):
         visited.add(current)
         try:
             res = requests.get(current, headers=headers, timeout=5)
-            res.raise_for_status()  # Lanza una excepción si la respuesta no es 2xx
+            res.raise_for_status()
             base = res.url
             soup = BeautifulSoup(res.text, "html.parser")
             for tag in soup.find_all(["a", "script", "link", "iframe"]):
@@ -70,7 +79,7 @@ def crawl_site(url):
             print(f"[!] Network error while accessing {current}: {e}")
         except Exception as e:
             print(f"[!] Error processing {current}: {e}")
-            continue  # Continua con la siguiente URL si ocurre cualquier otro error
+            continue
 
     return list(urls)
 
@@ -79,18 +88,16 @@ def is_same_domain(base_url, test_url):
     test_netloc = urlparse(test_url).netloc
     return test_netloc.endswith(base_netloc)
 
-def extract_params(target_url):
+def extract_params(target_url, headers):
     all_urls = set()
-
-    # Agregar desde Wayback
+    
     wayback_urls = get_wayback_urls(target_url)
     if wayback_urls:
         all_urls.update(wayback_urls)
     else:
         print(f"[!] Could not retrieve URLs from Wayback for {target_url}")
 
-    # Agregar desde crawling
-    crawled_urls = crawl_site(target_url)
+    crawled_urls = crawl_site(target_url,headers)
     if crawled_urls:
         all_urls.update(crawled_urls)
     else:
@@ -98,13 +105,11 @@ def extract_params(target_url):
 
     print(f"\n[+] Total URLs found: {len(all_urls)}")
 
-    # Filtrar URLs con parámetros válidas dentro del mismo dominio/subdominio
     urls_with_params = [
         u for u in all_urls 
         if "?" in u and "=" in u and is_same_domain(target_url, u)
     ]
 
-    # Deduplicar por base + nombre de parámetro
     unique_param_urls = []
     seen_param_signatures = set()
     for url in urls_with_params:
@@ -112,23 +117,15 @@ def extract_params(target_url):
         base = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
         query = parsed.query.split('&')
         for param in query:
-            key = param.split("=")[0]
+            key = param.split("=")[0].lower()
+            if key in BORING_PARAMS:
+                continue  # Ignorar parámetros irrelevantes
             signature = f"{base}?{key}="
             if signature not in seen_param_signatures:
                 seen_param_signatures.add(signature)
-                # reconstruimos la URL con solo ese parámetro
                 clean_url = f"{base}?{param}"
+                print(f"[{CYAN}+{RESET}] Param URL found: {clean_url}")
                 unique_param_urls.append(clean_url)
 
-    print(f"[+] Unique URLs with parameters: {len(unique_param_urls)}")
-
-    for u in unique_param_urls:
-        print(f"[{CYAN}+{RESET}] Param URL found: {u}")
-    
-    print(f"[+] Found {len(unique_param_urls)} unique URLs with parameters.\n")
+    print(f"[+] Found {len(unique_param_urls)} unique URLs with parameters (excluding non-injectables).\n")
     return unique_param_urls
-
-
-# Colores para uso local
-CYAN = "\033[96m"
-RESET = "\033[0m"
