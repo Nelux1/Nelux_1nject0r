@@ -38,7 +38,7 @@ def banner():
 ██║╚██╗██║██╔══╝  ██║     ██║   ██║ ██╔██╗   1NJECT0R
 ██║ ╚████║███████╗███████╗╚██████╔╝██╔╝ ██╗
 ╚═╝  ╚═══╝╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝
-Nelux 1nject0r - Param Filter Checker By Marcos Suarez V2.0
+Nelux 1nject0r - Param Filter Checker By Marcos Suarez V2.1
 {RESET}
     """)
 
