@@ -17,7 +17,8 @@ RESET = "\033[0m"
 # Parámetros comúnmente irrelevantes para pruebas (resolución, formato, etc.)
 BORING_PARAMS = {
     "impolicy", "imformat", "fp_height", "height", "width", "resize",
-    "format", "quality", "crop", "bgcolor", "fillcolor", "canvas", "cache"
+    "format", "quality", "crop", "bgcolor", "fillcolor", "canvas", "cache",
+    ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".woff", ".woff2", ".ico", ".ttf", ".eot", ".mp4", ".webm", ".pdf"
 }
 
 def get_wayback_urls(domain):
