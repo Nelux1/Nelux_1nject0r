@@ -1,7 +1,7 @@
 import requests
 from requests.exceptions import RequestException
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from re import sub
 
 # Characters to test for XSS or SQLi injection
@@ -16,7 +16,7 @@ RESET = '\033[0m'
 BOLD = '\033[1m'
 
 
-def test_parameter_sanitization(url, param):
+def test_parameter_sanitization(url, param, headers=None):
     """
     Prueba si un parámetro permite caracteres especiales sin filtrar.
     """
@@ -31,7 +31,7 @@ def test_parameter_sanitization(url, param):
         test_url = urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
 
         try:
-            response = requests.get(test_url, timeout=5)
+            response = requests.get(test_url, timeout=5, headers=headers)
             if response.status_code == 200 and char in response.text:
                 vulnerable_chars.append(char)
         except RequestException as e:
@@ -56,7 +56,7 @@ def detect_injection_type(chars):
         return 'SQLi or XSS'
 
 
-def analyze_url(url):
+def analyze_url(url, headers=None):
     """
     Analiza una única URL y prueba todos sus parámetros.
     """
@@ -65,7 +65,7 @@ def analyze_url(url):
 
     for param in query_params:
         print(f"{YELLOW}[*] Testing parameter: {param} en {url}{RESET}")
-        vulnerable_chars = test_parameter_sanitization(url, param)
+        vulnerable_chars = test_parameter_sanitization(url, param, headers)
 
         if vulnerable_chars:
             vuln_type = detect_injection_type(vulnerable_chars)
@@ -74,7 +74,6 @@ def analyze_url(url):
             print(f"{CYAN}Parameter: {param}{RESET}")
             print(f"{GREEN}No filter: {', '.join(vulnerable_chars)}{RESET}\n")
 
-            # Guardar la URL con el valor FUZZ sin comentarios ni números
             query = parse_qs(parsed.query)
             query[param] = ["FUZZ"]
             new_query = urlencode(query, doseq=True)
@@ -87,10 +86,17 @@ def analyze_url(url):
             print(f"{GREEN}[✓] {param} (Not Vulnerable){RESET}\n")
 
 
-def test_parameters(urls_with_params, threads=20):
+def test_parameters(urls_with_params, threads=20, headers=None):
     """
     Toma una lista de URLs con parámetros y las analiza en paralelo.
     """
     print(f"{CYAN}[*] Starting analysis with {threads} threads...{RESET}\n")
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        executor.map(analyze_url, urls_with_params)
+        futures = [executor.submit(analyze_url, url, headers) for url in urls_with_params]
+        for future in as_completed(futures):
+            try:
+                future.result()
+            except Exception as e:
+                print(f"{RED}[!] Error analyzing a parameter: {e}{RESET}")
+
+
