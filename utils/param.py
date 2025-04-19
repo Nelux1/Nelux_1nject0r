@@ -17,9 +17,18 @@ RESET = "\033[0m"
 # Parámetros comúnmente irrelevantes para pruebas (resolución, formato, etc.)
 BORING_PARAMS = {
     "impolicy", "imformat", "fp_height", "height", "width", "resize",
-    "format", "quality", "crop", "bgcolor", "fillcolor", "canvas", "cache",
-    ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".woff", ".woff2", ".ico", ".ttf", ".eot", ".mp4", ".webm", ".pdf"
+    "format", "quality", "crop", "bgcolor", "fillcolor", "canvas", "cache"
 }
+
+# Extensiones estáticas que no tienen sentido fuzzear
+STATIC_EXTENSIONS = (
+    ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg",
+    ".woff", ".woff2", ".ico", ".ttf", ".eot", ".mp4", ".webm", ".pdf"
+)
+
+def is_static_resource(url):
+    parsed = urlparse(url)
+    return parsed.path.lower().endswith(STATIC_EXTENSIONS)
 
 def get_wayback_urls(domain):
     print(f"[*] Searching for parameters: {domain}")
@@ -40,7 +49,7 @@ def get_wayback_urls(domain):
         print(f"[!] Unknown error in Wayback Machine for the URL  {domain}: {e}")
     return []
 
-def crawl_site(url,headers):
+def crawl_site(url, headers):
     print(f"[*] Crawling site: {url}")
     visited = set()
     urls = set()
@@ -98,7 +107,7 @@ def extract_params(target_url, headers):
     else:
         print(f"[!] Could not retrieve URLs from Wayback for {target_url}")
 
-    crawled_urls = crawl_site(target_url,headers)
+    crawled_urls = crawl_site(target_url, headers)
     if crawled_urls:
         all_urls.update(crawled_urls)
     else:
@@ -106,9 +115,10 @@ def extract_params(target_url, headers):
 
     print(f"\n[+] Total URLs found: {len(all_urls)}")
 
+    # Ahora filtramos también los recursos estáticos
     urls_with_params = [
-        u for u in all_urls 
-        if "?" in u and "=" in u and is_same_domain(target_url, u)
+        u for u in all_urls
+        if "?" in u and "=" in u and is_same_domain(target_url, u) and not is_static_resource(u)
     ]
 
     unique_param_urls = []
