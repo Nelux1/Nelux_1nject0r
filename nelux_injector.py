@@ -1,4 +1,4 @@
-mport sys
+import sys
 import signal
 import argparse
 from injector import test_parameters
