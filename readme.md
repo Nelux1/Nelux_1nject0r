@@ -66,41 +66,7 @@ python3 main.py -l urls.txt
 
 ### Use multi-threading to speed up scanning:
 
-```bash
-python3 main.py -l urls.txt -t 10
-```
 
----
-
-## Output Files
-
-- `parameters.txt`: URLs whose parameters allowed at least one special character (potentially vulnerable).
-- `vulnerables.txt`: URLs clearly vulnerable to XSS or SQLi.
-
----
-
-## Example Output
-
-```bash
-python3 main.py -u http://testphp.vulnweb.com
-```
-
-```
-🎩 Nelux 1nject0r – Scan started
-
-[*] Fetching from Wayback Machine: http://testphp.vulnweb.com
-[*] Crawling site: http://testphp.vulnweb.com
-
-[+] Param URL found: http://testphp.vulnweb.com/item?id=1
-[*] Testing parameter: id
-[⚠️] Possible SQLi – id allows character: '
-
-[+] Param URL found: http://testphp.vulnweb.com/search.php?q=test
-[*] Testing parameter: q
-[⚠️] Possible XSS – q allows character: <
-```
-
----
 
 ## Disclaimer
 
