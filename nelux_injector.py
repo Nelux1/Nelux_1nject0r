@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys, re
 import signal
 import argparse
