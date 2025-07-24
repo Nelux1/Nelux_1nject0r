@@ -12,7 +12,7 @@ import random
 # Colors
 RED = "\033[91m"
 GREEN = "\033[92m"
-CYAN = "\033[96m"
+CYAN = "\033[1;36m"
 RESET = "\033[0m"
 
 # Lista básica de User-Agents
@@ -77,7 +77,7 @@ def process_url(url, threads, headers, output_filename):
         return
 
     try:
-        urls_con_param = extract_params(url, headers)
+        urls_con_param = extract_params(url, headers,threads)
         if not urls_con_param:
             print(f"{RED}[!] No injectable parameters found in: {url}{RESET}")
             return
@@ -100,14 +100,14 @@ def main():
     headers = build_headers(args)
     
     if args.header:
-       print(f"{CYAN}[*] Use Headers:{RESET}")
-       print(f"{GREEN}{args.header}{RESET}")
+       print(f"\r\033[K{CYAN}[*] Use Headers:{RESET}")
+       print(f"\r\033[K{GREEN}{args.header}{RESET}")
 
     if args.random_agent:
-        print(f"{CYAN}[*] Use random agent{RESET}")     
+        print(f"\r\033[K{CYAN}[*] Use random agent{RESET}")     
 
     if args.url:
-        print(f"{CYAN}[*] Scanning URL:{RESET} {args.url}")
+        print(f"\r\033[K{CYAN}[*] Scanning URL:{RESET} {args.url}")
         output_filename = get_output_filename(args.url)
         process_url(args.url, args.threads, headers, output_filename)
         if args.word:
@@ -118,7 +118,7 @@ def main():
         try:
             with open(args.list, 'r') as file:
                 urls = file.readlines()
-                print(f"{CYAN}[*] Scanning URLs from file:{RESET} {args.list}")
+                print(f"\r\033[K{CYAN}[*] Scanning URLs from file:{RESET} {args.list}")
                 for url in urls:
                     url = url.strip()
                     if url:
@@ -127,30 +127,30 @@ def main():
                 if args.word:
                     fuzz_from_file(args.word, args.threads, headers)
         except FileNotFoundError:
-            print(f"{RED}[!] File not found: {args.list}{RESET}")
+            print(f"\r\033[K{RED}[!] File not found: {args.list}{RESET}")
             sys.exit(1)
         except Exception as e:
-            print(f"{RED}[!] Error reading the file: {e}{RESET}")
+            print(f"\r\033[K{RED}[!] Error reading the file: {e}{RESET}")
             sys.exit(1)
 
     elif args.param_list:
         try:
             with open(args.param_list, 'r') as file:
                 urls = [line.strip() for line in file if line.strip()]
-                print(f"{CYAN}[*] Testing pre-found parameter URLs from file: {args.param_list}{RESET}")
+                print(f"\r\033[K{CYAN}[*] Testing pre-found parameter URLs from file: {args.param_list}{RESET}")
                 for url in urls:
                     output_filename = get_output_filename(url)
                     test_parameters([url], args.threads, headers, output_filename)
                 if args.word:
                     fuzz_from_file(args.word, args.threads, headers)
         except FileNotFoundError:
-            print(f"{RED}[!] File not found: {args.param_list}{RESET}")
+            print(f"\r\033[K{RED}[!] File not found: {args.param_list}{RESET}")
             sys.exit(1)
         except Exception as e:
-            print(f"{RED}[!] Error reading param list file: {e}{RESET}")
+            print(f"\r\033[K{RED}[!] Error reading param list file: {e}{RESET}")
             sys.exit(1)  
     else:
-        print(f"{RED}[!] Please specify a URL with -u or a file with -l.{RESET}")
+        print(f"\r\033[K{RED}[!] Please specify a URL with -u or a file with -l.{RESET}")
 
 
 if __name__ == "__main__":
