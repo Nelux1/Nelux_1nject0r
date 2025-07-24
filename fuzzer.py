@@ -1,21 +1,23 @@
 from requests.exceptions import RequestException
 from concurrent.futures import ThreadPoolExecutor
-import threading,html
+import threading, html
 import urllib.parse
+from colorama import ansi, init
 from urllib.parse import urlparse, parse_qs
-import requests,glob
+import requests, glob, os, sys
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
+init()
 
-# Colores para salida
+# Colores
 RED = "\033[91m"
 GREEN = "\033[92m"
 CYAN = "\033[96m"
 RESET = "\033[0m"
 
-lock = threading.Lock()  # Para sincronizar impresión y escritura
-vulnerable_count = 0     # Contador de URLs vulnerables
+lock = threading.Lock()
+vulnerable_count = 0
 
 def load_payloads(wordlist_path):
     try:
@@ -32,23 +34,18 @@ def load_fuzz_targets(pattern="*_parameters.txt"):
             targets += [line.strip() for line in f if "FUZZ" in line]
     return targets
 
-
 def is_vulnerable(response, payload):
     reflected = payload in response.text
     html_decoded_reflection = html.unescape(response.text)
 
-    # Detectar si la reflexión está escapada o no
     if reflected:
-        # Si el payload aparece, pero escapado, ignorar
         if payload not in html_decoded_reflection:
-            return False  # Reflejado, pero seguro
+            return False
 
-        # Detectar patrones sospechosos sin escape
         xss_indicators = ['<script', 'onerror=', 'onload=', 'javascript:', '<img', '<svg', '<iframe']
         if any(indicator in html_decoded_reflection.lower() for indicator in xss_indicators):
             return True
 
-        # Caso especial: SQLi - buscar errores
         sql_indicators = [
             "you have an error in your sql syntax",
             "warning: mysql",
@@ -60,40 +57,48 @@ def is_vulnerable(response, payload):
         if any(err in response.text.lower() for err in sql_indicators):
             return True
 
-    # Error interno del servidor solo si hay indicios adicionales
     if response.status_code == 500 and any(err in response.text.lower() for err in ["exception", "traceback", "fatal"]):
         return True
 
     return False
 
+def get_domain_filename(url):
+    parsed = urlparse(url)
+    domain = parsed.netloc.replace("www.", "").split(":")[0]
+    domain = domain.split(".")[0]
+    return f"{domain}_vulnerables.txt"
 
 def test_payload(target_url, payload, headers):
     global vulnerable_count
     test_url = target_url.replace("FUZZ", payload)
-    # Codificar el payload para la URL
     encoded_payload = urllib.parse.quote(payload, safe='')
     encoded_url = target_url.replace("FUZZ", encoded_payload)
+
     try:
-        response = requests.get(test_url,headers=headers, timeout=5)
+        response = requests.get(test_url, headers=headers, timeout=5)
+
+        with lock:
+            sys.stdout.write(f"\r\033[K{CYAN}Testing:{RESET} {encoded_url[:100]}...")
+            sys.stdout.flush()
+
         if is_vulnerable(response, payload):
             with lock:
+                sys.stdout.write('\r' + ansi.clear_line())
+                sys.stdout.flush()
                 print(f"{RED}[VULNERABLE]{RESET} {encoded_url}")
-                with open("vulnerables.txt", "a") as out:
+                vuln_file = get_domain_filename(target_url)
+                with open(vuln_file, "a") as out:
                     out.write(test_url + "\n")
                 vulnerable_count += 1
             return True
-        else:
-            with lock:
-                print(f"{GREEN}[✓]{RESET} {encoded_url}")
-            return False
-    except RequestException as e:
-        with lock:
-            print(f"{RED}[!] Error with {encoded_url}: {e}{RESET}")
+        return False
+
+    except RequestException:
         return False
 
 def fuzz_from_file(wordlist_path, threads, headers=None):
     global vulnerable_count
-    vulnerable_count = 0  # Reiniciar al comenzar
+    vulnerable_count = 0
     fuzz_targets = load_fuzz_targets()
     payloads = load_payloads(wordlist_path)
 
@@ -104,28 +109,24 @@ def fuzz_from_file(wordlist_path, threads, headers=None):
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
         for target_url in fuzz_targets:
-            # Creamos un set para rastrear parámetros vulnerables
-            vulnerable_params = set()
-            
-            # Extraemos el parámetro de la URL
             parsed = urlparse(target_url)
             query = parse_qs(parsed.query)
-            
+
+            # Evitar repetir tests en el mismo param+payload aunque venga con otra URL
+            already_exploited = set()
+
             for param in query:
-                # Si el parámetro ya es vulnerable, lo saltamos
-                if param in vulnerable_params:
-                    continue
-                    
+                url_with_fuzz = target_url.replace(query[param][0], "FUZZ") if query[param] else target_url
+
                 for payload in payloads:
-                    # Creamos una URL de prueba con el payload
-                    test_url = target_url.replace("FUZZ", payload)
-                    
-                    # Si encontramos una vulnerabilidad, marcamos el parámetro y pasamos al siguiente
-                    if test_payload(test_url, payload, headers):
-                        vulnerable_params.add(param)
-                        break  # Salimos del bucle de payloads para este parámetro
+                    key = (param, payload)
+                    if key in already_exploited:
+                        continue
 
+                    if test_payload(url_with_fuzz, payload, headers):
+                        already_exploited.add(key)
+                        break  # Explotó → no seguimos con más payloads para este parámetro
+
+    sys.stdout.write('\r' + ansi.clear_line())
+    sys.stdout.flush()
     print(f"\n{CYAN}[*] Fuzzing completed. Vulnerable URLs found: {RED}{vulnerable_count}{RESET}")
-    print(f"\n{CYAN}[*] saved by default in: {RED}vulnerables.txt {RESET}")
-    
-
