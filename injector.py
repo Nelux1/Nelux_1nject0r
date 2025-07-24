@@ -13,7 +13,7 @@ from colorama import ansi, init
 init()
 
 print_lock = threading.Lock()
-tested_urls = set()  # Guardará los pares (url_base, parámetro) ya testeados
+tested_urls = set()
 
 FILTER_CHARS = ['"', "'", '<', '>', '$', '|', '(', ')', '`', ':', ';', '{', '}']
 
@@ -21,7 +21,6 @@ RED = '\033[91m'
 GREEN = '\033[92m'
 CYAN = '\033[96m'
 RESET = '\033[0m'
-BOLD = '\033[1m'
 
 def test_parameter_sanitization(url, param, headers=None):
     vulnerable_chars = []
@@ -94,22 +93,11 @@ def analyze_url(url, headers=None, output_filename=None):
         else:
             tested_urls.add(test_key)
 
-        short_url = url
-        max_length = 100
-        if len(short_url) > max_length:
-            short_url = short_url[:max_length - 3] + '...'
-
-        with print_lock:
-            sys.stdout.write('\r' + ansi.clear_line())
-            sys.stdout.write(f"{CYAN}[*] Testing :{RESET} {param} in {short_url}")
-            sys.stdout.flush()
-
         vulnerable_chars = test_parameter_sanitization(url, param, headers)
 
         if vulnerable_chars:
             vuln_type = detect_injection_type(vulnerable_chars)
-            sys.stdout.write('\r' + ansi.clear_line())
-            sys.stdout.flush()
+
             print(f"\n{RED}[⚠] Possible vulnerability detected:{RESET}")
             print(f"{CYAN}URL:{RESET} {url}")
             print(f"{CYAN}Parameter:{RESET} {param}")
@@ -124,11 +112,10 @@ def analyze_url(url, headers=None, output_filename=None):
 
             filename = output_filename if output_filename else sanitize_filename(url)
             with open(filename, "a") as f:
-             f.write(clean_url + "\n")
-      
+                f.write(clean_url + "\n")
 
 def test_parameters(urls_with_params, threads=20, headers=None, output_filename=None):
-    print(f"{CYAN}[*]{RESET} Starting analysis with {threads} threads...\n")
+    #print(f"{CYAN}[*]{RESET} Starting analysis with {threads} threads...\n")
     with ThreadPoolExecutor(max_workers=threads) as executor:
         futures = [executor.submit(analyze_url, url, headers, output_filename) for url in urls_with_params]
         for future in as_completed(futures):
