@@ -138,9 +138,24 @@ def main():
             with open(args.param_list, 'r') as file:
                 urls = [line.strip() for line in file if line.strip()]
                 print(f"\r\033[K{CYAN}[*] Testing pre-found parameter URLs from file: {args.param_list}{RESET}")
+                
+                # Rastrear archivos únicos que se van a procesar
+                unique_files = set()
                 for url in urls:
                     output_filename = get_output_filename(url)
-                    test_parameters([url], args.threads, headers, output_filename)
+                    unique_files.add(output_filename)
+                
+                # Procesar cada URL sin mostrar mensaje individual
+                for url in urls:
+                    output_filename = get_output_filename(url)
+                    test_parameters([url], args.threads, headers, output_filename, show_save_message=False)
+                
+                # Mostrar mensaje de guardado solo para archivos únicos
+                if unique_files:
+                    print(f"\n{CYAN}[*] Files saved by default in: {RESET}")
+                    for filename in sorted(unique_files):
+                        print(f"{GREEN}  - {filename}{RESET}")
+                
                 if args.word:
                     fuzz_from_file(args.word, args.threads, headers)
         except FileNotFoundError:
