@@ -114,7 +114,7 @@ def analyze_url(url, headers=None, output_filename=None):
             with open(filename, "a") as f:
                 f.write(clean_url + "\n")
 
-def test_parameters(urls_with_params, threads=20, headers=None, output_filename=None):
+def test_parameters(urls_with_params, threads=20, headers=None, output_filename=None, show_save_message=True):
     #print(f"{CYAN}[*]{RESET} Starting analysis with {threads} threads...\n")
     with ThreadPoolExecutor(max_workers=threads) as executor:
         futures = [executor.submit(analyze_url, url, headers, output_filename) for url in urls_with_params]
@@ -123,4 +123,5 @@ def test_parameters(urls_with_params, threads=20, headers=None, output_filename=
                 future.result()
             except Exception:
                 pass
-    print(f"\n{CYAN}[*] saved by default in: {RED}{output_filename}{RESET}")
+    if show_save_message:
+        print(f"\n{CYAN}[*] saved by default in: {RED}{output_filename}{RESET}")
